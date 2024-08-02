@@ -30,13 +30,15 @@ Answer the question based on the above context: {question}
 # Function to extract text from an uploaded PDF
 # Function to load text from an uploaded PDF using PyMuPDFLoader
 def load_text_from_pdf(uploaded_file):
-  # Read the uploaded file buffer
-  file_bytes = uploaded_file.read()
-  # Use the file buffer to create a PyMuPDFLoader instance
-  loader = PyMuPDFLoader(io.BytesIO(file_bytes))
-  documents = loader.load()
-  text = " ".join(doc.page_content for doc in documents)
-  return text
+    text = ""
+    # Read the uploaded file buffer
+    file_bytes = uploaded_file.read()
+    # Use the file buffer to create a PyMuPDF document
+    doc = fitz.open(stream=file_bytes, filetype="pdf")
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        text += page.get_text("text")
+    return text
 
 # Initialize embeddings, model, and vector store
 @st.cache_resource  # Singleton, prevent multiple initializations
