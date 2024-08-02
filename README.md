@@ -2,7 +2,7 @@
 
 Chat anything about the documents that you provided. This is using open source LLM models by Meta: Llama 3
 
-![ChatbotUI](/images/ChatbotUI.png)
+![ChatbotUI](/images/ChatbotUI2.png)
 
 ## Install dependencies
 
