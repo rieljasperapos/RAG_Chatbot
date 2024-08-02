@@ -1,4 +1,7 @@
 langchain
+langchain-community
+langchain-groq
 pypdf
 chromadb
 boto3
+streamlit
