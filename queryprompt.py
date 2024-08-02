@@ -5,9 +5,9 @@ from langchain.chains import RetrievalQA
 import streamlit as st
 import asyncio
 import time
-import sys
 
 __import__('pysqlite3')
+import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 CHROMA_PATH = "chroma"
