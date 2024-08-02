@@ -6,3 +6,4 @@ chromadb
 boto3
 streamlit
 sentence-transformers
+einops
