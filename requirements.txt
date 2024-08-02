@@ -1,10 +1,10 @@
+streamlit
 langchain
 langchain-community
 langchain-groq
 pypdf
-chromadb
 boto3
-streamlit
 sentence-transformers
 einops
+chromadb
 pysqlite3-binary
