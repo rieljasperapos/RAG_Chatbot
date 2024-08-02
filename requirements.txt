@@ -3,6 +3,7 @@ langchain
 langchain-community
 langchain-groq
 pypdf
+PyMuPDF
 boto3
 sentence-transformers
 einops
