@@ -1,4 +1,5 @@
 import fitz  # PyMuPDF
+from langchain.document_loaders import PyMuPDFLoader
 from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
