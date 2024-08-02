@@ -29,16 +29,21 @@ Answer the question based on the above context: {question}
 
 # Function to extract text from an uploaded PDF
 # Function to load text from an uploaded PDF using PyMuPDFLoader
+def extract_text_from_page(page):
+    return page.get_text("text")
+
 def load_text_from_pdf(uploaded_file):
-    text = ""
-    # Read the uploaded file buffer
+    text = []
     file_bytes = uploaded_file.read()
-    # Use the file buffer to create a PyMuPDF document
     doc = fitz.open(stream=file_bytes, filetype="pdf")
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        text += page.get_text("text")
-    return text
+
+    # Create a ThreadPoolExecutor to process pages concurrently
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(extract_text_from_page, doc.load_page(page_num)) for page_num in range(len(doc))]
+        for future in as_completed(futures):
+            text.append(future.result())
+    
+    return "\n".join(text)
 
 # Initialize embeddings, model, and vector store
 @st.cache_resource  # Singleton, prevent multiple initializations
