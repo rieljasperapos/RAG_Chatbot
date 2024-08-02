@@ -9,6 +9,7 @@ import streamlit as st
 import asyncio
 import time
 import populate_database
+import io
 
 __import__('pysqlite3')
 import sys
