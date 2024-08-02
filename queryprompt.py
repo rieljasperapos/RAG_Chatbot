@@ -85,6 +85,29 @@ async def process_uploaded_file(uploaded_file):
     vectordb.add_texts(texts)
     return "Text added to vector store"
 
+async def query_rag(query_text: str, top_k: int):
+  start_time = time.time()
+
+  # Initialize the chain
+  chain = init_chain()
+    
+  # Perform the retrieval-based QA
+  response = chain(query_text)
+    
+  response_text = response['result']
+  sources = response['source_documents']
+
+  # Prepare context
+  context_start = time.time()
+  context_text = "\n\n---\n\n".join([doc.page_content for doc in sources])
+  context_end = time.time()
+  st.write(f"Context Preparation Time: {context_end - context_start:.2f} seconds")
+
+  total_time = time.time() - start_time
+  st.write(f"Total Time: {total_time:.2f} seconds")
+    
+  return response_text
+
 def main():
   st.set_page_config(page_title="Chat with your Documents", layout="wide")
   st.title("Chat with your Documents")
@@ -145,29 +168,6 @@ def main():
         st.write(chat["user"])
       with st.chat_message("assistant"):
         st.markdown(chat["assistant"])
-
-async def query_rag(query_text: str, top_k: int):
-  start_time = time.time()
-
-  # Initialize the chain
-  chain = init_chain()
-    
-  # Perform the retrieval-based QA
-  response = chain(query_text)
-    
-  response_text = response['result']
-  sources = response['source_documents']
-
-  # Prepare context
-  context_start = time.time()
-  context_text = "\n\n---\n\n".join([doc.page_content for doc in sources])
-  context_end = time.time()
-  st.write(f"Context Preparation Time: {context_end - context_start:.2f} seconds")
-
-  total_time = time.time() - start_time
-  st.write(f"Total Time: {total_time:.2f} seconds")
-    
-  return response_text
 
 if __name__ == "__main__":
   main()
