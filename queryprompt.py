@@ -28,17 +28,15 @@ Answer the question based only on the following context:
 Answer the question based on the above context: {question}
 """
 
-# Function to extract text from an uploaded PDF
-# Function to load text from an uploaded PDF using PyMuPDFLoader
+# Function to extract text from a single page
 def extract_text_from_page(page):
     return page.get_text("text")
 
-def load_text_from_pdf(uploaded_file):
+# Function to load text from PDF using ThreadPoolExecutor
+def load_text_from_pdf(file_bytes):
     text = []
-    file_bytes = uploaded_file.read()
     doc = fitz.open(stream=file_bytes, filetype="pdf")
 
-    # Create a ThreadPoolExecutor to process pages concurrently
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(extract_text_from_page, doc.load_page(page_num)) for page_num in range(len(doc))]
         for future in as_completed(futures):
@@ -73,6 +71,19 @@ if 'query_processing' not in st.session_state:
     st.session_state.query_processing = False
 if 'file_uploaded' not in st.session_state:
     st.session_state.file_uploaded = False
+
+async def process_uploaded_file(uploaded_file):
+    file_bytes = uploaded_file.read()
+    extracted_text = await asyncio.to_thread(load_text_from_pdf, file_bytes)
+
+    # Add extracted text to the vector store
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    texts = text_splitter.split_text(extracted_text)
+    model_kwargs = {'trust_remote_code': True}
+    embedding_function = HuggingFaceEmbeddings(model_name='nomic-ai/nomic-embed-text-v1.5', model_kwargs=model_kwargs)
+    vectordb = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding_function)
+    vectordb.add_texts(texts)
+    return "Text added to vector store"
 
 def main():
   st.set_page_config(page_title="Chat with your Documents", layout="wide")
