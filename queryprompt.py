@@ -7,6 +7,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import streamlit as st
 import asyncio
 import time
+import populate_database
 
 __import__('pysqlite3')
 import sys
@@ -25,16 +26,14 @@ Answer the question based on the above context: {question}
 """
 
 # Function to extract text from an uploaded PDF
-def extract_text_from_uploaded_pdf(uploaded_file):
-  text = ""
+# Function to load text from an uploaded PDF using PyMuPDFLoader
+def load_text_from_pdf(uploaded_file):
   # Read the uploaded file buffer
   file_bytes = uploaded_file.read()
-  # Use the file buffer to create a PDF document
-  doc = fitz.open(stream=file_bytes, filetype="pdf")
-  for page_num in range(len(doc)):
-    page = doc.load_page(page_num)
-    text += page.get_text("text")
-
+  # Use the file buffer to create a PyMuPDFLoader instance
+  loader = PyMuPDFLoader(io.BytesIO(file_bytes))
+  documents = loader.load()
+  text = " ".join(doc.page_content for doc in documents)
   return text
 
 # Initialize embeddings, model, and vector store
@@ -89,7 +88,7 @@ def main():
       with spinner_placeholder:
         with st.spinner("Processing the uploaded file..."):
           # Extract text from the uploaded file in memory
-          extracted_text = extract_text_from_uploaded_pdf(uploaded_file)
+          extracted_text = load_text_from_pdf(uploaded_file)
 
           # Add extracted text to the vector store
           text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
