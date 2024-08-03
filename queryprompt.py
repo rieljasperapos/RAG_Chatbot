@@ -64,11 +64,17 @@ def init_chain(top_k: int):
 
     return chain
 
+# Function to clear data from the database
 def clear_database():
-    if os.path.exists(CHROMA_PATH):
-        shutil.rmtree(CHROMA_PATH)
-        st.session_state.file_uploaded = False
+    # Initialize the vector store
+    vectordb = Chroma(persist_directory=CHROMA_PATH, embedding_function=get_embedding_function())
+    
+    try:
+        # Delete all documents from the vector store
+        vectordb.clear()
         st.sidebar.success("Database cleared")
+    except Exception as e:
+        st.sidebar.error(f"Error clearing database: {e}")
 
 # Initialize chat history and processing flags
 if 'chat_history' not in st.session_state:
