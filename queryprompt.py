@@ -72,20 +72,14 @@ def init_chain(top_k: int):
 
 # Function to clear data from the database
 def clear_database():
-    vectordb = initialize_vectordb()
-
     try:
-        # Retrieve all document IDs
-        existing_items = vectordb.get(include=["ids"])
-        existing_ids = existing_items.get("ids", [])
-
-        if existing_ids:
-            # Delete documents by IDs
-            vectordb.delete_documents(ids=existing_ids)
-            vectordb.persist()  # Ensure changes are saved
+        if os.path.exists(CHROMA_PATH):
+            # Clear the contents of the directory
+            shutil.rmtree(CHROMA_PATH)
+            os.makedirs(CHROMA_PATH)  # Recreate the directory
             st.sidebar.success("Database cleared")
         else:
-            st.sidebar.info("No documents found to clear")
+            st.sidebar.info("Database directory does not exist")
 
     except Exception as e:
         st.sidebar.error(f"Error clearing database: {e}")
