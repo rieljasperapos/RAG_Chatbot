@@ -68,7 +68,9 @@ def init_chain(top_k: int):
 # Function to clear data from the database
 def clear_database():
     # Initialize the vector store
-    vectordb = Chroma(persist_directory=CHROMA_PATH, embedding_function=get_embedding_function.get_embedding_function())
+    model_kwargs = {'trust_remote_code': True}
+    embedding = HuggingFaceEmbeddings(model_name='nomic-ai/nomic-embed-text-v1.5', model_kwargs=model_kwargs)
+    vectordb = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding)
     
     try:
         # Delete all documents from the vector store
