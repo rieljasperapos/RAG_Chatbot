@@ -5,6 +5,7 @@ from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
 from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+import get_embedding_function
 import streamlit as st
 import asyncio
 import time
