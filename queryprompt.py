@@ -28,11 +28,6 @@ Answer the question based only on the following context:
 Answer the question based on the above context: {question}
 """
 
-def initialize_vectordb():
-    model_kwargs = {'trust_remote_code': True}
-    embedding = HuggingFaceEmbeddings(model_name='nomic-ai/nomic-embed-text-v1.5', model_kwargs=model_kwargs)
-    return Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding)
-
 # Function to extract text from an uploaded PDF using a temporary file
 def extract_text_from_uploaded_pdf(uploaded_file, progress_bar):
     # Save the uploaded file to a temporary file
@@ -73,16 +68,24 @@ def init_chain(top_k: int):
 # Function to clear data from the database
 def clear_database():
     try:
-        if os.path.exists(CHROMA_PATH):
-            # Clear the contents of the directory
-            shutil.rmtree(CHROMA_PATH)
-            os.makedirs(CHROMA_PATH)  # Recreate the directory
-            st.sidebar.success("Database cleared")
+        # Load the existing database
+        model_kwargs = {'trust_remote_code': True}
+        embedding = HuggingFaceEmbeddings(model_name='nomic-ai/nomic-embed-text-v1.5', model_kwargs=model_kwargs)
+        db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding)
+        
+        # Retrieve all existing document IDs
+        existing_items = db.get(include=["ids"])  # Ensure we include IDs
+        existing_ids = set(existing_items["ids"])
+        
+        if existing_ids:
+            # Remove all documents from the database
+            db.delete_documents(ids=existing_ids)
+            db.persist()
+            print("✅ Database cleared successfully.")
         else:
-            st.sidebar.info("Database directory does not exist")
-
+            print("No documents found to clear.")
     except Exception as e:
-        st.sidebar.error(f"Error clearing database: {e}")
+        print(f"Error clearing database: {e}")
 
 
 # Initialize chat history and processing flags
