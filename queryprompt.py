@@ -81,11 +81,11 @@ def clear_database():
             # Remove all documents from the database
             db.delete_documents(ids=existing_ids)
             db.persist()
-            print("✅ Database cleared successfully.")
+            st.sidebar.success("✅ Database cleared successfully.")
         else:
-            print("No documents found to clear.")
+            st.sidebar.info("No documents found to clear.")
     except Exception as e:
-        print(f"Error clearing database: {e}")
+        st.sidebar.error(f"Error clearing database: {e}")
 
 
 # Initialize chat history and processing flags
