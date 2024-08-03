@@ -5,7 +5,7 @@ from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
 from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from embedding_utils import get_embedding_function
+import get_embedding_function
 import streamlit as st
 import asyncio
 import time
@@ -68,7 +68,7 @@ def init_chain(top_k: int):
 # Function to clear data from the database
 def clear_database():
     # Initialize the vector store
-    vectordb = Chroma(persist_directory=CHROMA_PATH, embedding_function=get_embedding_function())
+    vectordb = Chroma(persist_directory=CHROMA_PATH, embedding_function=get_embedding_function.get_embedding_function())
     
     try:
         # Delete all documents from the vector store
