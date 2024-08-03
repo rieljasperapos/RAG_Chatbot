@@ -1,20 +1,12 @@
 import fitz  # PyMuPDF
-from langchain.document_loaders import PyMuPDFLoader
 from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import streamlit as st
 import asyncio
 import time
-import populate_database
-import io
-
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 CHROMA_PATH = "chroma"
 
@@ -28,21 +20,18 @@ Answer the question based only on the following context:
 Answer the question based on the above context: {question}
 """
 
-# Function to extract text from a single page
-def extract_text_from_page(page):
-    return page.get_text("text")
+# Function to extract text from an uploaded PDF
+def extract_text_from_uploaded_pdf(uploaded_file):
+  text = ""
+  # Read the uploaded file buffer
+  file_bytes = uploaded_file.read()
+  # Use the file buffer to create a PDF document
+  doc = fitz.open(stream=file_bytes, filetype="pdf")
+  for page_num in range(len(doc)):
+    page = doc.load_page(page_num)
+    text += page.get_text("text")
 
-# Function to load text from PDF using ThreadPoolExecutor
-def load_text_from_pdf(file_bytes):
-    text = []
-    doc = fitz.open(stream=file_bytes, filetype="pdf")
-
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(extract_text_from_page, doc.load_page(page_num)) for page_num in range(len(doc))]
-        for future in as_completed(futures):
-            text.append(future.result())
-    
-    return "\n".join(text)
+  return text
 
 # Initialize embeddings, model, and vector store
 @st.cache_resource  # Singleton, prevent multiple initializations
@@ -72,42 +61,6 @@ if 'query_processing' not in st.session_state:
 if 'file_uploaded' not in st.session_state:
     st.session_state.file_uploaded = False
 
-async def process_uploaded_file(uploaded_file):
-    file_bytes = uploaded_file.read()
-    extracted_text = await asyncio.to_thread(load_text_from_pdf, file_bytes)
-
-    # Add extracted text to the vector store
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    texts = text_splitter.split_text(extracted_text)
-    model_kwargs = {'trust_remote_code': True}
-    embedding_function = HuggingFaceEmbeddings(model_name='nomic-ai/nomic-embed-text-v1.5', model_kwargs=model_kwargs)
-    vectordb = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding_function)
-    vectordb.add_texts(texts)
-    return "Text added to vector store"
-
-async def query_rag(query_text: str, top_k: int):
-  start_time = time.time()
-
-  # Initialize the chain
-  chain = init_chain()
-    
-  # Perform the retrieval-based QA
-  response = chain(query_text)
-    
-  response_text = response['result']
-  sources = response['source_documents']
-
-  # Prepare context
-  context_start = time.time()
-  context_text = "\n\n---\n\n".join([doc.page_content for doc in sources])
-  context_end = time.time()
-  st.write(f"Context Preparation Time: {context_end - context_start:.2f} seconds")
-
-  total_time = time.time() - start_time
-  st.write(f"Total Time: {total_time:.2f} seconds")
-    
-  return response_text
-
 def main():
   st.set_page_config(page_title="Chat with your Documents", layout="wide")
   st.title("Chat with your Documents")
@@ -132,7 +85,7 @@ def main():
       with spinner_placeholder:
         with st.spinner("Processing the uploaded file..."):
           # Extract text from the uploaded file in memory
-          extracted_text = load_text_from_pdf(uploaded_file)
+          extracted_text = extract_text_from_uploaded_pdf(uploaded_file)
 
           # Add extracted text to the vector store
           text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
@@ -168,6 +121,29 @@ def main():
         st.write(chat["user"])
       with st.chat_message("assistant"):
         st.markdown(chat["assistant"])
+
+async def query_rag(query_text: str, top_k: int):
+  start_time = time.time()
+
+  # Initialize the chain
+  chain = init_chain()
+    
+  # Perform the retrieval-based QA
+  response = chain(query_text)
+    
+  response_text = response['result']
+  sources = response['source_documents']
+
+  # Prepare context
+  context_start = time.time()
+  context_text = "\n\n---\n\n".join([doc.page_content for doc in sources])
+  context_end = time.time()
+  st.write(f"Context Preparation Time: {context_end - context_start:.2f} seconds")
+
+  total_time = time.time() - start_time
+  st.write(f"Total Time: {total_time:.2f} seconds")
+    
+  return response_text
 
 if __name__ == "__main__":
   main()
