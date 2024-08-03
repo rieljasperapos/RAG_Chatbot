@@ -63,6 +63,12 @@ def init_chain(top_k: int):
 
     return chain
 
+def clear_database():
+    if os.path.exists(CHROMA_PATH):
+        shutil.rmtree(CHROMA_PATH)
+        st.session_state.file_uploaded = False
+        st.sidebar.success("Database cleared")
+
 # Initialize chat history and processing flags
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
@@ -114,6 +120,10 @@ def main():
                     # Reset file processing flag
                     st.session_state.file_processing = False
                     spinner_placeholder.empty()
+
+     # Button to clear the database
+    if st.sidebar.button("Clear Database"):
+        clear_database()
 
     query_text = st.chat_input("Ask anything")
     if query_text:
