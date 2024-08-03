@@ -67,25 +67,20 @@ def init_chain(top_k: int):
 
 # Function to clear data from the database
 def clear_database():
-    try:
-        # Load the existing database
-        model_kwargs = {'trust_remote_code': True}
-        embedding = HuggingFaceEmbeddings(model_name='nomic-ai/nomic-embed-text-v1.5', model_kwargs=model_kwargs)
-        db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding)
-        
-        # Retrieve all existing document IDs
-        existing_items = db.get(include=["ids"])  # Ensure we include IDs
-        existing_ids = set(existing_items["ids"])
-        
-        if existing_ids:
-            # Remove all documents from the database
-            db.delete_documents(ids=existing_ids)
-            db.persist()
-            st.sidebar.success("✅ Database cleared successfully.")
-        else:
-            st.sidebar.info("No documents found to clear.")
-    except Exception as e:
-        st.sidebar.error(f"Error clearing database: {e}")
+  """Clears the contents of the vector store database."""
+  try:
+    # Load the existing database
+    model_kwargs = {'trust_remote_code': True}
+    embedding = HuggingFaceEmbeddings(model_name='nomic-ai/nomic-embed-text-v1.5', model_kwargs=model_kwargs)
+    vectordb = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding)
+
+    # Delete all documents from the database
+    vectordb.delete_all()
+    vectordb.persist()
+
+    st.sidebar.success("✅ Database cleared successfully.")
+  except Exception as e:
+    st.sidebar.error(f"Error clearing database: {e}")
 
 
 # Initialize chat history and processing flags
