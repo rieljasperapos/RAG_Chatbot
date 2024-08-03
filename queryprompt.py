@@ -28,6 +28,9 @@ Answer the question based only on the following context:
 Answer the question based on the above context: {question}
 """
 
+def initialize_vectordb():
+    return Chroma(persist_directory=CHROMA_PATH, embedding_function=get_embedding_function())
+
 # Function to extract text from an uploaded PDF using a temporary file
 def extract_text_from_uploaded_pdf(uploaded_file, progress_bar):
     # Save the uploaded file to a temporary file
@@ -67,17 +70,24 @@ def init_chain(top_k: int):
 
 # Function to clear data from the database
 def clear_database():
-    # Initialize the vector store
-    model_kwargs = {'trust_remote_code': True}
-    embedding = HuggingFaceEmbeddings(model_name='nomic-ai/nomic-embed-text-v1.5', model_kwargs=model_kwargs)
-    vectordb = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding)
-    
+    vectordb = initialize_vectordb()
+
     try:
-        # Delete all documents from the vector store
-        vectordb.clear()
-        st.sidebar.success("Database cleared")
+        # Retrieve all document IDs
+        existing_items = vectordb.get(include=["ids"])
+        existing_ids = existing_items.get("ids", [])
+
+        if existing_ids:
+            # Delete documents by IDs
+            vectordb.delete_documents(ids=existing_ids)
+            vectordb.persist()  # Ensure changes are saved
+            st.sidebar.success("Database cleared")
+        else:
+            st.sidebar.info("No documents found to clear")
+
     except Exception as e:
         st.sidebar.error(f"Error clearing database: {e}")
+
 
 # Initialize chat history and processing flags
 if 'chat_history' not in st.session_state:
