@@ -29,7 +29,9 @@ Answer the question based on the above context: {question}
 """
 
 def initialize_vectordb():
-    return Chroma(persist_directory=CHROMA_PATH, embedding_function=get_embedding_function())
+    model_kwargs = {'trust_remote_code': True}
+    embedding = HuggingFaceEmbeddings(model_name='nomic-ai/nomic-embed-text-v1.5', model_kwargs=model_kwargs)
+    return Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding)
 
 # Function to extract text from an uploaded PDF using a temporary file
 def extract_text_from_uploaded_pdf(uploaded_file, progress_bar):
